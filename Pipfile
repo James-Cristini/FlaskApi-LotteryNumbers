@@ -11,6 +11,7 @@ flask-sqlalchemy = "*"
 flask-marshmallow = "*"
 marshmallow-sqlalchemy = "*"
 pandas = "*"
+requests = "*"
 
 [requires]
 python_version = "2.7"
