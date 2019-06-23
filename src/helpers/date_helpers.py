@@ -1,5 +1,5 @@
 from datetime import datetime
-from src.helpers.errors import DataValidationError
+from errors import DataValidationError
 
 
 DATE_FORMAT_1 = '%Y%M%d'

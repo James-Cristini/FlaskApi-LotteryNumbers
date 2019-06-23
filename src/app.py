@@ -100,8 +100,8 @@ def get_all_powerball_drawings():
     return jsonify(result.data)
 
 
-@app.route('/powerball/<id>', methods=['GET'])
-def get_powerball_drawings(id):
+@app.route('/powerball/id=<id>', methods=['GET'])
+def get_powerball_drawing(id):
     """ Get and return query for a single powerball drawing by id. """
 
     drawing = PowerballDrawing.query.get(id)
@@ -145,6 +145,15 @@ def delete_powerball_drawing(id):
     return powerball_drawing_schema.jsonify(drawing)
 
 
+@app.route('/powerball/last_drawing', methods=['GET'])
+def get_most_recent_powerball_drawing():
+    """ Gets and returns the most recent powerball drawing in the db. """
+
+    last_draw = PowerballDrawing.query.order_by(PowerballDrawing.draw_date.desc()).first()
+    result = powerball_drawing_schema.dump(last_draw)
+    return jsonify(result)
+
+
 ###### MEGAMILLIONS ROUTES ######
 @app.route('/megamillions', methods=['GET'])
 def get_all_megamillions_drawings():
@@ -156,7 +165,7 @@ def get_all_megamillions_drawings():
 
 
 @app.route('/megamillions/<id>', methods=['GET']) # make id=<id>
-def get_megamillions_drawings(id):
+def get_megamillions_drawing(id):
     """ Get and return query for a single megamillions drawing by id. """
 
     drawing = MegaMillionDrawing.query.get(id)
@@ -198,6 +207,15 @@ def delete_megamillions_drawing(id):
     db.session.commit()
 
     return megamillions_drawing_schema.jsonify(drawing)
+
+@app.route('/megamillions/last_drawing', methods=['GET'])
+def get_most_recent_megamillion_drawing():
+    """ Gets and returns the most recent megamillion drawing in the db. """
+
+    last_draw = MegaMillionDrawing.query.order_by(MegaMillionDrawing.draw_date.desc()).first()
+    result = megamillions_drawing_schema.dump(last_draw)
+    return jsonify(result)
+
 
 if __name__ == '__main__':
     app.run(debug=DEBUG)

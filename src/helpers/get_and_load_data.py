@@ -1,25 +1,43 @@
 # ~ https://catalog.data.gov/dataset/lottery-powerball-winning-numbers-beginning-2010
+    ### https://data.ny.gov/api/views/d6yy-54nr/rows.csv?accessType=DOWNLOAD
 # ~ https://catalog.data.gov/dataset/lottery-mega-millions-winning-numbers-beginning-2002
+    ### https://data.ny.gov/api/views/5xaw-6ayf/rows.csv?accessType=DOWNLOAD
 
 import pandas as pd
 import requests
 import json
 import argparse
 
-from src.helpers import date_helpers
+import date_helpers
 
-POWERBALL_FILE = 'src/data/powerball_dataset.csv'
-MEGAMILLIONS_FILE = 'src/data/megamillions_dataset.csv'
+POWERBALL_FILE = 'src/helpers/powerball_dataset.csv'
+MEGAMILLIONS_FILE = 'src/helpers/megamillions_dataset.csv'
 
 POWERBALL_URL = 'http://127.0.0.1:5000/powerball'
 MEGAMILLIONS_URL = 'http://127.0.0.1:5000/megamillions'
+
+
+def fix_date(dt):
+
+    dt = date_helpers.str_to_dto(dt)
+    dt = date_helpers.dto_to_str(dt)
+    return dt
 
 
 def get_and_load_powerball_data():
     try: # Load dataframe from csv
         df = pd.read_csv(POWERBALL_FILE)
     except IOError:
-        pass # TODO look for and download file, then load dataframe
+        raise # TODO look for and download file, then load dataframe
+
+    ### Get most recent date in exiting API data
+    last_draw_date = get_most_recent_date('powerball')
+
+    ### Fix date columns
+    df['Draw Date'] = df['Draw Date'].apply(fix_date)
+
+    ### Filter new data to only include newer drawings
+    df = df[df['Draw Date'] > last_draw_date]
 
     for index, row in df.iterrows():
 
@@ -31,9 +49,9 @@ def get_and_load_powerball_data():
         # Get numbers from string
         n1, n2, n3, n4, n5, pb = numbers_list.split(' ')
 
-        # Fix date format
-        draw_date = date_helpers.str_to_dto(draw_date)
-        draw_date = date_helpers.dto_to_str(draw_date)
+        # Fix date format # XXX Uncessecary now
+        # draw_date = date_helpers.str_to_dto(draw_date)
+        # draw_date = date_helpers.dto_to_str(draw_date)
 
         # Create json data object
         data = {
@@ -56,7 +74,16 @@ def get_and_load_megamillions_data():
     try: # Load dataframe from csv
         df = pd.read_csv(MEGAMILLIONS_FILE)
     except IOError:
-        pass # TODO look for and download file, then load to dataframe
+        raise # TODO look for and download file, then load to dataframe
+
+    ### Get most recent date in exiting API data
+    last_draw_date = get_most_recent_date('megamillions')
+
+    ### Fix date columns
+    df['Draw Date'] = df['Draw Date'].apply(fix_date)
+
+    ### Filter new data to only include newer drawings
+    df = df[df['Draw Date'] > last_draw_date]
 
     for index, row in df.iterrows():
 
@@ -95,6 +122,19 @@ DRAWINGS = {
     'mm': get_and_load_megamillions_data,
 }
 
+def get_most_recent_date(pb_or_mm):
+    """ """
+    # Get and update url based on param
+    url = POWERBALL_URL if pb_or_mm == 'powerball' else MEGAMILLIONS_URL if pb_or_mm == 'megamillions' else ''
+    url += '/last_drawing'
+    # Get last drawing object
+    req = requests.get(url)
+    last_drawing = json.loads(req.content)[0]
+    last_date = last_drawing['draw_date']
+
+    return last_date
+
+
 def run(drawing):
     try: # Attempt to run function
         func = DRAWINGS[drawing]
@@ -120,6 +160,7 @@ def parse_cl_args():
     return cl_args
 
 if __name__ == '__main__':
-    cl_args = parse_cl_args()
-    drawing = cl_args['drawing']
-    run(drawing)
+    # cl_args = parse_cl_args()
+    # drawing = cl_args['drawing']
+    # run(drawing)
+    get_and_load_megamillions_data()
